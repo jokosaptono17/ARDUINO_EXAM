@@ -1,419 +1,827 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ujian Online Responsif</title>
+    <title>Arduino Certification Exam</title>
     <style>
+        /* =========================================
+           1. CSS VARIABEL & GLOBAL RESET
+           ========================================= */
         :root {
-            --primary: #00979d;
-            --primary-dark: #00797d;
-            --bg-light: #f4f7f6;
-            --text-dark: #2c3e50;
-            --sidebar-w: 280px;
+            --col-teal-dark: #00878F;
+            --col-teal-light: #62AEB2;
+            --col-teal-faint: #E0F7FA;
+            --col-bg-main: #DAE1E7;
+            --col-text-dark: #333333;
+            --col-danger: #E74C3C;
+            --col-success: #2ECC71;
+            --sidebar-width: 320px;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            /* Mencegah blok teks */
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: var(--bg-light);
-            color: var(--text-dark);
-            height: 100vh; /* Fallback untuk browser lama */
-            height: 100dvh; /* Dynamic Viewport Height untuk Mobile modern agar tidak tertutup address bar */
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--col-bg-main);
+            color: var(--col-text-dark);
+            height: 100dvh;
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* Mencegah scroll pada body utama */
-        }
-
-        /* --- 1. LOGIN (Tidak banyak berubah) --- */
-        #login-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            display: flex; justify-content: center; align-items: center; z-index: 999;
-            padding: 20px;
-        }
-        .login-box {
-            background: white; padding: 30px; border-radius: 12px; width: 100%; max-width: 400px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2); text-align: center;
-        }
-        .login-box h2 { color: var(--primary); margin-bottom: 25px; }
-        .form-group { margin-bottom: 20px; text-align: left; }
-        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
-        .form-input {
-            width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px;
-            font-size: 16px; transition: border-color 0.3s;
-        }
-        .form-input:focus { border-color: var(--primary); outline: none; }
-        .btn-login {
-            width: 100%; padding: 14px; background: var(--primary); color: white; border: none;
-            border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;
-        }
-
-        /* --- 2. LAYOUT APLIKASI UTAMA (PERBAIKAN TOTAL) --- */
-        #exam-app {
-            display: none;
-            height: 100%; /* Mengikuti tinggi body (100dvh) */
-            width: 100%;
-            flex-direction: row;
             overflow: hidden;
         }
 
-        /* SIDEBAR KIRI */
-        #sidebar {
-            width: var(--sidebar-w);
+        /* =========================================
+           2. CUSTOM MODAL STYLES
+           ========================================= */
+        #modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        #modal-box {
             background: white;
-            border-right: 1px solid #eee;
+            width: 90%;
+            max-width: 420px;
+            padding: 35px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+            transform: scale(0.8);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        #modal-overlay.active #modal-box {
+            transform: scale(1);
+        }
+
+        .modal-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .icon-success {
+            color: var(--col-success);
+        }
+
+        .icon-error {
+            color: var(--col-danger);
+        }
+
+        .icon-warning {
+            color: #F39C12;
+        }
+
+        #modal-title {
+            font-size: 1.6rem;
+            margin-bottom: 15px;
+            color: var(--col-text-dark);
+            font-weight: 700;
+        }
+
+        #modal-message {
+            font-size: 1.05rem;
+            color: #555;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .btn-modal {
+            padding: 14px 35px;
+            border-radius: 50px;
+            border: none;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-modal:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-modal-primary {
+            background: var(--col-teal-dark);
+            color: white;
+        }
+
+        .btn-modal-danger {
+            background: var(--col-danger);
+            color: white;
+        }
+
+        .btn-modal-secondary {
+            background: #f0f2f5;
+            color: #555;
+        }
+
+        /* =========================================
+           3. LOGIN & APP STYLES
+           ========================================= */
+        #login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--col-teal-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: white;
+            padding: 40px 35px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .login-card h2 {
+            color: var(--col-teal-dark);
+            margin-bottom: 30px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            font-size: 1.8rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 2px solid #eef2f7;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: 0.3s;
+            background: #f8fafc;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--col-teal-dark);
+            background: white;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 15px;
+            background: var(--col-teal-dark);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: #00797d;
+        }
+
+        .btn-primary:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        #exam-app-container {
+            display: none;
+            height: 100%;
+            width: 100%;
+            flex-direction: row;
+        }
+
+        #sidebar {
+            width: var(--sidebar-width);
+            background: white;
             display: flex;
             flex-direction: column;
+            flex-shrink: 0;
             z-index: 2;
-            flex-shrink: 0; /* Mencegah sidebar menyusut */
+            box-shadow: 5px 0 25px rgba(0, 0, 0, 0.05);
         }
-        .sidebar-header { padding: 20px; border-bottom: 1px solid #f0f0f0; }
-        .timer-box {
-            background: #e0f7fa; color: var(--primary-dark); padding: 15px;
-            border-radius: 8px; font-size: 1.5rem; font-weight: 700;
-            text-align: center; margin-top: 15px; border: 2px solid var(--primary);
-        }
-        .nav-grid-wrapper { flex: 1; overflow-y: auto; padding: 20px; }
-        .nav-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
-        .nav-btn {
-            aspect-ratio: 1; border: 1px solid #ddd; background: white; border-radius: 6px;
-            font-weight: 600; color: #7f8c8d; cursor: pointer;
-        }
-        .nav-btn.active { border: 2px solid var(--primary); background: #e0f7fa; color: var(--primary); }
-        .nav-btn.answered { background: var(--primary); color: white; border-color: var(--primary); }
 
-        /* AREA KONTEN KANAN (Wadah Utama) */
-        #main-content {
-            flex: 1;
+        .sidebar-header-teal {
+            background: var(--col-teal-dark);
+            color: white;
+            padding: 35px 25px;
+            text-align: center;
             display: flex;
-            flex-direction: column; /* Susun vertikal: Kartu Soal di atas, Footer di bawah */
-            overflow: hidden; /* PENTING: Mencegah double scrollbar */
-            background-color: var(--bg-light);
-            position: relative;
-        }
-
-        /* WADAH SCROLL SOAL (Hanya area ini yang bisa di-scroll) */
-        .scrollable-question-area {
-            flex: 1; /* Mengambil sisa ruang yang ada */
-            overflow-y: auto; /* Aktifkan scroll vertikal di sini */
-            padding: 30px;
-            /* Agar scroll smooth di iOS */
-            -webkit-overflow-scrolling: touch; 
-        }
-
-        .question-card {
-            background: white; padding: 30px; border-radius: 12px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
-            /* Min-height agar tidak gepeng saat konten sedikit */
-            min-height: 100%; 
-        }
-
-        /* FOOTER NAVIGASI (STICKY DI BAWAH) */
-        .footer-nav {
-            flex-shrink: 0; /* JANGAN biarkan footer menyusut/hilang */
-            padding: 15px 30px;
-            background: white;
-            border-top: 1px solid #e0e0e0;
-            display: flex;
-            justify-content: space-between;
+            flex-direction: column;
             align-items: center;
+        }
+
+        .header-logo-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
             gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .arduino-icon-svg {
+            width: 40px;
+            height: 40px;
+            fill: none;
+            stroke: white;
+            stroke-width: 2.5;
+        }
+
+        .cert-text-box {
+            background: white;
+            color: var(--col-teal-dark);
+            font-weight: 900;
+            font-size: 0.95rem;
+            letter-spacing: 2px;
+            padding: 8px 14px;
+            border-radius: 4px;
+        }
+
+        .header-divider {
+            width: 70%;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.25);
+            margin-bottom: 30px;
+        }
+
+        .timer-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 4px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .timer-countdown {
+            font-family: 'Courier New', monospace;
+            font-size: 3.2rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            line-height: 1;
+        }
+
+        .sidebar-nav-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+            background: #fff;
+        }
+
+        .nav-buttons-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .nav-btn-circle {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: none;
+            background: #F0F4F8;
+            color: #7f8c8d;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .nav-btn-circle:hover {
+            transform: scale(1.15);
+            background: #e2e8f0;
+        }
+
+        .nav-btn-circle.is-active {
+            background: var(--col-teal-dark) !important;
+            color: white !important;
+            box-shadow: 0 0 0 5px #B2EBF2;
+            transform: scale(1.1);
+        }
+
+        .nav-btn-circle.is-answered {
+            background: white;
+            color: var(--col-teal-dark);
+            box-shadow: 0 0 0 5px #B2EBF2;
+        }
+
+        #main-content-area {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 100px;
+            overflow-y: auto;
+        }
+
+        .question-paper {
+            background: white;
+            padding: 60px;
+            border-radius: 20px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 950px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .question-info {
+            color: #aaa;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            margin-bottom: 25px;
+            font-size: 0.9rem;
+        }
+
+        .question-text {
+            font-size: 1.6rem;
+            line-height: 1.5;
+            color: var(--col-text-dark);
+            margin-bottom: 40px;
+            font-weight: 500;
+        }
+
+        #q-image-wrapper {
+            text-align: center;
+            margin-bottom: 40px;
+            display: none;
+        }
+
+        #q-image-wrapper img {
+            max-width: 100%;
+            max-height: 450px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .option-card {
+            display: flex;
+            align-items: center;
+            padding: 20px 25px;
+            border: 2px solid #f0f4f8;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1.15rem;
+            background: #fff;
+        }
+
+        .option-card:hover {
+            background: var(--col-teal-faint);
+            border-color: var(--col-teal-light);
+            transform: translateX(5px);
+        }
+
+        .option-card.is-selected {
+            background: var(--col-teal-dark);
+            border-color: var(--col-teal-dark);
+            color: white;
+            transform: translateX(10px);
+            box-shadow: 0 5px 15px rgba(0, 135, 143, 0.2);
+        }
+
+        .custom-radio {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #cbd5e0;
+            border-radius: 50%;
+            margin-right: 20px;
+            flex-shrink: 0;
+            position: relative;
+            transition: 0.2s;
+        }
+
+        .is-selected .custom-radio {
+            border-color: white;
+        }
+
+        .is-selected .custom-radio::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 12px;
+            height: 12px;
+            background: white;
+            border-radius: 50%;
+        }
+
+        .nav-arrow-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: none;
+            background: white;
+            color: var(--col-teal-dark);
+            font-size: 28px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             z-index: 10;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        .btn-nav {
-            padding: 12px 25px; border: none; border-radius: 8px;
-            font-size: 1rem; font-weight: 700; color: white; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
+        .nav-arrow-btn:hover:not(:disabled) {
+            background: var(--col-teal-dark);
+            color: white;
+            transform: translateY(-50%) scale(1.15);
+            box-shadow: 0 15px 40px rgba(0, 135, 143, 0.3);
         }
-        .btn-prev { background: #95a5a6; }
-        .btn-next { background: var(--primary); }
-        .btn-submit { background: #e74c3c; }
-        .btn-nav:disabled { background: #e0e0e0; color: #999; cursor: not-allowed; }
 
-        /* Styling Soal & Opsi */
-        .q-text { font-size: 1.2rem; line-height: 1.6; margin-bottom: 25px; }
-        #q-image-box img { max-width: 100%; max-height: 350px; border-radius: 8px; border: 1px solid #eee; display: block; margin: 0 auto 20px; }
-        .option-label {
-            display: flex; align-items: center; padding: 15px; border: 2px solid #eee;
-            border-radius: 10px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s;
+        .nav-arrow-btn:disabled {
+            opacity: 0;
+            pointer-events: none;
         }
-        .option-label.selected { border-color: var(--primary); background: #e0f7fa; }
-        .option-label input { margin-right: 15px; transform: scale(1.3); flex-shrink: 0; }
 
-        /* --- 3. RESPONSIF MOBILE (ANDROID/iOS) --- */
+        #btn-prev {
+            left: 30px;
+        }
+
+        #btn-next {
+            right: 30px;
+        }
+
+        #btn-finish-floating {
+            position: absolute;
+            bottom: 40px;
+            right: 40px;
+            padding: 18px 50px;
+            background: var(--col-danger);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-weight: 800;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            box-shadow: 0 15px 35px rgba(231, 76, 60, 0.4);
+            cursor: pointer;
+            display: none;
+            z-index: 100;
+            transition: all 0.3s;
+        }
+
+        #btn-finish-floating:hover {
+            transform: scale(1.05) translateY(-5px);
+            box-shadow: 0 20px 40px rgba(231, 76, 60, 0.5);
+        }
+
         @media (max-width: 768px) {
-            #exam-app { flex-direction: column; } /* Ubah layout jadi vertikal */
+            #exam-app-container {
+                flex-direction: column;
+            }
 
-            /* Sidebar Mobile (Jadi Header Tipis) */
             #sidebar {
                 width: 100%;
                 height: auto;
                 flex-direction: row;
                 align-items: center;
                 justify-content: space-between;
-                padding: 10px 15px;
-                border-right: none;
-                border-bottom: 2px solid var(--primary);
-            }
-            .sidebar-header, .nav-grid-wrapper { display: none; } /* Sembunyikan elemen detail di header mobile */
-            
-            /* Tampilkan Timer & Info Deringkas di Mobile */
-            #mobile-header-info {
-                display: flex !important;
-                width: 100%; justify-content: space-between; align-items: center;
-            }
-            .timer-box {
-                margin: 0; padding: 5px 12px; font-size: 1.1rem; border-width: 1px;
+                padding: 0;
+                box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
             }
 
-            /* Area Soal Mobile */
-            .scrollable-question-area { padding: 15px; }
-            .question-card { padding: 20px; border-radius: 8px; box-shadow: none; }
-            .q-text { font-size: 1.1rem; }
+            .sidebar-header-teal {
+                flex-direction: row;
+                width: 100%;
+                padding: 12px 20px;
+                justify-content: space-between;
+            }
 
-            /* Footer Mobile (Kunci Perbaikan Anda) */
-            .footer-nav {
-                padding: 12px 15px; /* Perkecil padding agar hemat tempat */
+            .header-logo-row {
+                margin-bottom: 0;
+                gap: 10px;
             }
-            .btn-nav {
-                padding: 12px 15px; /* Tombol lebih ramping */
-                font-size: 0.9rem;
-                flex: 1; /* Tombol berbagi rata ukurannya */
+
+            .arduino-icon-svg {
+                width: 32px;
+                height: 32px;
             }
-            /* Trik: Jika layar sangat kecil, sembunyikan teks "Sebelumnya" jadi ikon arah saja jika perlu.
-               Tapi untuk sekarang kita coba perkecil font dulu. */
+
+            .cert-text-box {
+                font-size: 0.75rem;
+                padding: 5px 10px;
+            }
+
+            .header-divider,
+            .sidebar-nav-content {
+                display: none;
+            }
+
+            .timer-wrapper {
+                align-items: flex-end;
+            }
+
+            .timer-title {
+                font-size: 0.65rem;
+                margin-bottom: 2px;
+            }
+
+            .timer-countdown {
+                font-size: 1.6rem;
+            }
+
+            #main-content-area {
+                padding: 25px 20px 100px 20px;
+                justify-content: flex-start;
+            }
+
+            .question-paper {
+                padding: 30px;
+                max-height: none;
+                overflow-y: visible;
+                border-radius: 15px;
+            }
+
+            .question-text {
+                font-size: 1.3rem;
+                margin-bottom: 25px;
+            }
+
+            .option-card {
+                padding: 15px 20px;
+                font-size: 1rem;
+            }
+
+            .nav-arrow-btn {
+                position: fixed;
+                top: auto;
+                bottom: 20px;
+                transform: none !important;
+                width: 55px;
+                height: 55px;
+                font-size: 24px;
+                background: var(--col-teal-dark);
+                color: white;
+                box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            }
+
+            #btn-prev {
+                left: 20px;
+            }
+
+            #btn-next {
+                right: 20px;
+            }
+
+            #btn-finish-floating {
+                bottom: 20px;
+                right: 20px;
+                padding: 15px 35px;
+                font-size: 1rem;
+            }
         }
     </style>
 </head>
+
 <body>
 
-    <div id="login-overlay">
-        <div class="login-box">
-            <h2>Masuk Ujian</h2>
-            <div class="form-group">
-                <label>Nama Siswa</label>
-                <input type="text" id="student-name" class="form-input" autocomplete="off">
-            </div>
-            <div class="form-group">
-                <label>Kode Ujian</label>
-                <input type="text" id="exam-code" class="form-input" autocomplete="off" style="text-transform: uppercase;">
-            </div>
-            <button id="btn-login" class="btn-login" onclick="attemptLogin()">MULAI MENGERJAKAN</button>
-            <p id="loading-msg" style="display:none; margin-top:15px; color:#666;">Menyiapkan soal...</p>
+    <div id="modal-overlay">
+        <div id="modal-box">
+            <div id="modal-icon-container"></div>
+            <h3 id="modal-title">Notifikasi</h3>
+            <p id="modal-message">Isi pesan...</p>
+            <div id="modal-actions" class="modal-actions"></div>
         </div>
     </div>
 
-    <div id="exam-app">
-        <nav id="sidebar">
-            <div class="sidebar-header">
-                <h3>Peserta: <span id="disp-name">-</span></h3>
-                <div class="timer-box" id="timer-display">00:00:00</div>
-            </div>
-            <div class="nav-grid-wrapper">
-                <p><strong>Navigasi Soal:</strong></p>
-                <div class="nav-grid" id="nav-grid"></div>
-            </div>
+    <div id="login-overlay">
+        <div class="login-card">
+            <h2>ARDUINO CERTIFICATION</h2>
+            <input type="text" id="inp-name" class="form-input" placeholder="Nama Lengkap Peserta" autocomplete="off">
+            <input type="text" id="inp-code" class="form-input" placeholder="Kode Ujian"
+                style="text-transform: uppercase;" autocomplete="off">
+            <button id="btn-login" class="btn-primary" onclick="handleLogin()">START EXAM</button>
+            <p id="txt-loading" style="display: none; margin-top: 20px; color: white; font-weight: 500;">Sedang
+                memverifikasi data...</p>
+        </div>
+    </div>
 
-            <div id="mobile-header-info" style="display: none;">
-                 <div>
-                    <strong style="color:var(--primary)">Soal <span id="mob-q-num">1</span></strong>
-                 </div>
-                 <div class="timer-box" id="timer-display-mobile">00:00</div>
+    <div id="exam-app-container">
+        <nav id="sidebar">
+            <div class="sidebar-header-teal">
+                <div class="header-logo-row">
+                    <svg class="arduino-icon-svg" viewBox="0 0 24 24">
+                        <circle cx="8" cy="12" r="4.5" />
+                        <circle cx="16" cy="12" r="4.5" /><text x="6" y="13" fill="white" font-size="5"
+                            font-weight="bold">-</text><text x="14.5" y="13.5" fill="white" font-size="5"
+                            font-weight="bold">+</text>
+                    </svg>
+                    <div class="cert-text-box">CERTIFICATION</div>
+                </div>
+                <div class="header-divider"></div>
+                <div class="timer-wrapper">
+                    <span class="timer-title">TIME LEFT</span>
+                    <span id="timer-display" class="timer-countdown">00:00:00</span>
+                </div>
+            </div>
+            <div class="sidebar-nav-content">
+                <div id="nav-grid-container" class="nav-buttons-grid"></div>
             </div>
         </nav>
 
-        <main id="main-content">
-            <div class="scrollable-question-area">
-                <div class="question-card">
-                    <div style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:20px;">
-                        <h3 style="color:var(--primary)" id="q-num-desktop">Soal 1 / -</h3>
-                    </div>
-                    
-                    <div id="q-image-box" style="display:none;"><img id="q-img" src=""></div>
-                    <div id="q-text" class="q-text">Memuat...</div>
-                    
-                    <div id="option-list"></div>
-                </div>
+        <main id="main-content-area">
+            <div class="question-paper">
+                <div class="question-info">QUESTION <span id="q-curr">1</span> OF <span id="q-total">10</span></div>
+                <div id="q-image-wrapper"><img id="q-image-element" src=""></div>
+                <div id="q-text-element" class="question-text">Loading...</div>
+                <div id="options-container"></div>
             </div>
-
-            <div class="footer-nav">
-                <button id="btn-prev" class="btn-nav btn-prev" onclick="prevQ()">← Sebelumnya</button>
-                <button id="btn-next" class="btn-nav btn-next" onclick="nextQ()">Selanjutnya →</button>
-                <button id="btn-submit" class="btn-nav btn-submit" onclick="submitExam(false)" style="display:none;">Kumpulkan ✓</button>
-            </div>
+            <button id="btn-prev" class="nav-arrow-btn" onclick="navigate(-1)">&#8592;</button>
+            <button id="btn-next" class="nav-arrow-btn" onclick="navigate(1)">&#8594;</button>
+            <button id="btn-finish-floating" onclick="confirmFinish()">FINISH EXAM</button>
         </main>
     </div>
 
     <script>
         // =========================================
-        // GANTI URL DI BAWAH INI DENGAN PUNYA ANDA
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxQPg2fOEZqbSOOnOYhgcbB20ijqaNnUoTivtDG0V8PIQQleaRYlVNk6IwwR5pqPtsYeA/exec';
+        // KONFIGURASI URL BACKEND (WAJIB DIGANTI!)
+        const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbxQPg2fOEZqbSOOnOYhgcbB20ijqaNnUoTivtDG0V8PIQQleaRYlVNk6IwwR5pqPtsYeA/exec';
         // =========================================
 
-        let questionsDB = [];
-        let userAnswers = [];
-        let currentIndex = 0;
-        let userData = { name: '', code: '' };
-        let timerInterval;
+        let appState = { questions: [], answers: [], currentIdx: 0, name: '', code: '', timer: null, violations: 0 };
 
-        // --- LOGIN ---
-        function attemptLogin() {
-            const name = document.getElementById('student-name').value.trim();
-            const code = document.getElementById('exam-code').value.trim().toUpperCase();
-            if(!name || !code) return alert("Isi nama dan kode ujian!");
+        // --- SISTEM MODAL CUSTOM ---
+        function showModal(title, msg, type, actionsHTML) {
+            const icons = { success: '<span class="modal-icon icon-success">&#10004;</span>', error: '<span class="modal-icon icon-error">&#10006;</span>', warning: '<span class="modal-icon icon-warning">&#9888;</span>' };
+            document.getElementById('modal-icon-container').innerHTML = icons[type] || '';
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-message').innerHTML = msg;
+            document.getElementById('modal-actions').innerHTML = actionsHTML;
+            const overlay = document.getElementById('modal-overlay');
+            overlay.style.display = 'flex'; setTimeout(() => overlay.classList.add('active'), 10);
+        }
+        function closeModal() {
+            const overlay = document.getElementById('modal-overlay');
+            overlay.classList.remove('active'); setTimeout(() => overlay.style.display = 'none', 300);
+        }
+        function showAlert(title, msg, type = 'warning', cb = null) {
+            showModal(title, msg, type, `<button class="btn-modal btn-modal-primary" id="modal-ok">OK</button>`);
+            document.getElementById('modal-ok').onclick = () => { closeModal(); if (cb) cb(); };
+        }
+        function showConfirm(title, msg, onYes) {
+            showModal(title, msg, 'warning', `<button class="btn-modal btn-modal-secondary" onclick="closeModal()">Batal</button><button class="btn-modal btn-modal-danger" id="modal-yes">YA, Lanjutkan</button>`);
+            document.getElementById('modal-yes').onclick = () => { closeModal(); onYes(); };
+        }
+
+        // --- SISTEM KEAMANAN (ANTI-CURANG) ---
+        function enableSecurity() {
+            document.documentElement.requestFullscreen().catch(() => { });
+            document.addEventListener("visibilitychange", () => { if (document.hidden) recordViolation("Meninggalkan halaman ujian."); });
+            window.addEventListener("blur", () => { setTimeout(() => { if (!document.hasFocus()) recordViolation("Kehilangan fokus layar."); }, 1000); });
+            document.addEventListener("contextmenu", e => e.preventDefault());
+            document.addEventListener("keydown", e => {
+                if (["F12", "F5", "PrintScreen"].includes(e.key) || (e.ctrlKey && ["r", "c", "v", "x"].includes(e.key))) {
+                    e.preventDefault(); if (e.key === "PrintScreen") navigator.clipboard.writeText("");
+                }
+            });
+        }
+        function recordViolation(reason) {
+            appState.violations++;
+            if (appState.violations >= 4) {
+                showAlert("DISKUALIFIKASI", "Terlalu banyak pelanggaran. Ujian dihentikan otomatis.", 'error', () => submit(true));
+            } else {
+                showAlert("PERINGATAN KEAMANAN", `${reason}<br>Pelanggaran ke: <b>${appState.violations}/3</b>`, 'error');
+            }
+        }
+
+        // --- LOGIKA UTAMA ---
+        function handleLogin() {
+            const name = document.getElementById('inp-name').value.trim();
+            const code = document.getElementById('inp-code').value.trim().toUpperCase();
+            if (!name || !code) return showAlert("Login Gagal", "Lengkapi nama dan kode ujian.", 'error');
 
             document.getElementById('btn-login').disabled = true;
-            document.getElementById('loading-msg').style.display = 'block';
+            document.getElementById('txt-loading').style.display = 'block';
 
-            fetch(APPS_SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'login', nama: name, kode: code })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.status === 'success') {
-                    userData.name = name; userData.code = code;
-                    questionsDB = data.questions;
-                    userAnswers = new Array(questionsDB.length).fill(null);
-                    
-                    document.getElementById('login-overlay').style.display = 'none';
-                    document.getElementById('exam-app').style.display = 'flex'; // Flex agar layout jalan
-                    document.getElementById('disp-name').innerText = name;
-                    
-                    initExam();
-                } else {
-                    alert("Gagal: " + data.message);
-                    document.getElementById('btn-login').disabled = false;
-                    document.getElementById('loading-msg').style.display = 'none';
-                }
-            })
-            .catch(err => {
-                alert("Koneksi bermasalah. Coba refresh.");
-                document.getElementById('btn-login').disabled = false;
-            });
+            fetch(BACKEND_URL, { method: 'POST', body: JSON.stringify({ action: 'login', nama: name, kode: code }) })
+                .then(res => res.json()).then(d => {
+                    if (d.status === 'success') {
+                        appState.name = name; appState.code = code; appState.questions = d.questions;
+                        appState.answers = new Array(d.questions.length).fill(null);
+                        document.getElementById('login-overlay').style.display = 'none';
+                        document.getElementById('exam-app-container').style.display = 'flex';
+                        document.getElementById('q-total').innerText = appState.questions.length;
+                        initExam();
+                    } else { showAlert("Login Gagal", d.message, 'error'); resetLogin(); }
+                }).catch(() => { showAlert("Error", "Gagal koneksi ke server.", 'error'); resetLogin(); });
         }
+        function resetLogin() { document.getElementById('btn-login').disabled = false; document.getElementById('txt-loading').style.display = 'none'; }
 
-        // --- CORE UJIAN ---
         function initExam() {
-            renderNavGrid();
-            loadQuestion(0);
-            startTimer(90 * 60); // 90 menit
-        }
-
-        function loadQuestion(idx) {
-            currentIndex = idx;
-            const q = questionsDB[idx];
-            
-            // Update info di desktop & mobile
-            document.getElementById('q-num-desktop').innerText = `Soal ${idx+1} dari ${questionsDB.length}`;
-            document.getElementById('mob-q-num').innerText = `${idx+1} / ${questionsDB.length}`;
-            document.getElementById('q-text').innerText = q.text;
-
-            // Gambar
-            const imgBox = document.getElementById('q-image-box');
-            if(q.image && q.image.length > 5) {
-                document.getElementById('q-img').src = q.image;
-                imgBox.style.display = 'block';
-            } else {
-                imgBox.style.display = 'none';
-            }
-
-            // Opsi
-            const list = document.getElementById('option-list');
-            list.innerHTML = '';
-            ['A','B','C','D'].forEach((letter, i) => {
-                const isSelected = userAnswers[idx] === letter;
-                list.innerHTML += `
-                <label class="option-label ${isSelected ? 'selected' : ''}" onclick="selectAns(${idx}, '${letter}')">
-                    <input type="radio" name="ans" ${isSelected ? 'checked' : ''}>
-                    <span>${letter}. ${q.options[i]}</span>
-                </label>`;
+            const grid = document.getElementById('nav-grid-container');
+            appState.questions.forEach((_, i) => {
+                const btn = document.createElement('button'); btn.className = 'nav-btn-circle';
+                btn.id = `nav-${i}`; btn.innerText = i + 1; btn.onclick = () => loadQ(i); grid.appendChild(btn);
             });
-
-            updateNav();
+            loadQ(0); runTimer(50); enableSecurity();
+            window.onbeforeunload = () => "Ujian sedang berlangsung!";
         }
 
-        function selectAns(qIdx, val) {
-            userAnswers[qIdx] = val;
-            loadQuestion(currentIndex); // Refresh tampilan untuk highlight
+        function loadQ(idx) {
+            appState.currentIdx = idx; const q = appState.questions[idx];
+            document.getElementById('q-curr').innerText = idx + 1;
+            document.getElementById('q-text-element').innerText = q.text;
+            const img = document.getElementById('q-image-wrapper');
+            if (q.image && q.image.length > 5) { document.getElementById('q-image-element').src = q.image; img.style.display = 'block'; }
+            else { img.style.display = 'none'; }
+            const opts = document.getElementById('options-container'); opts.innerHTML = '';
+            ['A', 'B', 'C', 'D'].forEach((opt, i) => {
+                opts.innerHTML += `<div class="option-card ${appState.answers[idx] === opt ? 'is-selected' : ''}" onclick="selectAns(${idx},'${opt}')"><div class="custom-radio"></div><span>${q.options[i]}</span></div>`;
+            });
+            updateUI();
         }
-
-        function nextQ() { if(currentIndex < questionsDB.length - 1) loadQuestion(currentIndex + 1); }
-        function prevQ() { if(currentIndex > 0) loadQuestion(currentIndex - 1); }
-
-        function updateNav() {
-            // Update Grid Navigasi
-            questionsDB.forEach((_, i) => {
+        function selectAns(idx, val) { appState.answers[idx] = val; loadQ(idx); }
+        function navigate(dir) { loadQ(appState.currentIdx + dir); }
+        function updateUI() {
+            appState.questions.forEach((_, i) => {
                 const btn = document.getElementById(`nav-${i}`);
-                if(btn) {
-                    btn.className = 'nav-btn ' + (i === currentIndex ? 'active ' : '') + (userAnswers[i] ? 'answered' : '');
-                }
+                btn.className = `nav-btn-circle ${i === appState.currentIdx ? 'is-active' : ''} ${appState.answers[i] ? 'is-answered' : ''}`;
             });
-
-            // Update Tombol Footer
-            document.getElementById('btn-prev').disabled = (currentIndex === 0);
-            const isLast = (currentIndex === questionsDB.length - 1);
+            document.getElementById('btn-prev').disabled = appState.currentIdx === 0;
+            const isLast = appState.currentIdx === appState.questions.length - 1;
             document.getElementById('btn-next').style.display = isLast ? 'none' : 'flex';
-            document.getElementById('btn-submit').style.display = isLast ? 'flex' : 'none';
+            document.getElementById('btn-finish-floating').style.display = isLast ? 'block' : 'none';
         }
-
-        function renderNavGrid() {
-            const grid = document.getElementById('nav-grid');
-            grid.innerHTML = '';
-            questionsDB.forEach((_, i) => {
-                const btn = document.createElement('button');
-                btn.className = 'nav-btn';
-                btn.innerText = i+1;
-                btn.id = `nav-${i}`;
-                btn.onclick = () => loadQuestion(i);
-                grid.appendChild(btn);
-            });
-        }
-
-        // --- TIMER & SUBMIT ---
-        function startTimer(sec) {
-            timerInterval = setInterval(() => {
-                sec--;
-                const m = Math.floor(sec / 60);
-                const s = sec % 60;
-                const timeStr = `${Math.floor(m/60)}:${(m%60)<10?'0':''}${m%60}:${s<10?'0':''}${s}`;
-                document.getElementById('timer-display').innerText = timeStr;
-                document.getElementById('timer-display-mobile').innerText = timeStr; // Update timer mobile juga
-                if(sec <= 0) {
-                    clearInterval(timerInterval);
-                    submitExam(true);
-                }
+        function runTimer(sec) {
+            appState.timer = setInterval(() => {
+                sec--; const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+                document.getElementById('timer-display').innerText = `${h < 10 ? '0' : ''}${h}:${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+                if (sec <= 0) { clearInterval(appState.timer); showAlert("WAKTU HABIS", "Jawaban dikumpulkan otomatis.", 'warning', () => submit(true)); }
             }, 1000);
         }
-
-        function submitExam(auto=false) {
-            if(!auto && !confirm("Yakin ingin mengumpulkan?")) return;
-            
-            document.getElementById('main-content').style.opacity = '0.5';
-            clearInterval(timerInterval);
-
-            let score = 0;
-            questionsDB.forEach((q,i) => { if(userAnswers[i] === q.correctKey) score++; });
-
-            fetch(APPS_SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: 'submit', nama: userData.name, kode: userData.code,
-                    benar: score, total: questionsDB.length
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                alert(`Selesai! Nilai Anda: ${(score/questionsDB.length*100).toFixed(1)}`);
-                location.reload();
-            })
-            .catch(() => {
-                alert("Gagal kirim. Coba tekan tombol kumpulkan lagi.");
-                document.getElementById('main-content').style.opacity = '1';
-            });
+        function confirmFinish() {
+            const unans = appState.answers.filter(a => a === null).length;
+            showConfirm("Konfirmasi Selesai", unans > 0 ? `Masih ada <b>${unans}</b> soal belum dijawab. Yakin kumpulkan?` : "Yakin ingin mengakhiri ujian ini?", () => submit(false));
+        }
+        function submit(auto) {
+            clearInterval(appState.timer); window.onbeforeunload = null;
+            document.getElementById('exam-app-container').style.opacity = '0.5';
+            document.getElementById('exam-app-container').style.pointerEvents = 'none';
+            let score = 0; appState.questions.forEach((q, i) => { if (appState.answers[i] === q.correctKey) score++; });
+            fetch(BACKEND_URL, { method: 'POST', body: JSON.stringify({ action: 'submit', nama: appState.name, kode: appState.code, benar: score, total: appState.questions.length }) })
+                .then(res => res.json()).then(d => showAlert("UJIAN SELESAI", `Nilai Anda: <b>${(score / appState.questions.length * 100).toFixed(2)}</b>`, 'success', () => location.reload()))
+                .catch(() => { showAlert("Gagal Submit", "Coba tekan FINISH lagi.", 'error'); document.getElementById('exam-app-container').style.opacity = '1'; document.getElementById('exam-app-container').style.pointerEvents = 'all'; });
         }
     </script>
 </body>
+
 </html>
