@@ -530,6 +530,57 @@
                 font-size: 1rem;
             }
         }
+
+        /* =========================================
+   LOADING SPINNER STYLE BARU
+   ========================================= */
+        #loading-verify {
+            display: none;
+            /* Awalnya disembunyikan */
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 0 0 0;
+            color: var(--col-teal);
+            font-weight: 600;
+        }
+
+        .dot-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 20px;
+            margin-bottom: 15px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            margin: 0 5px;
+            background-color: var(--col-teal);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .dot:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .dot:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0);
+            }
+
+            40% {
+                transform: scale(1.0);
+            }
+        }
     </style>
 </head>
 
@@ -547,8 +598,8 @@
     <div id="login-layer">
         <div class="login-box">
             <div class="header-logo-row">
-                <img src="https://github.com/jokosaptono17/SHE_LandingPage/blob/main/ASTO.png?raw=true" alt="Logo"
-                    class="custom-logo-header" onerror="this.style.display='none'">
+                <img src="https://github.com/jokosaptono17/PLANTASTO/blob/main/LOGO%20PPD%202021.png?raw=true"
+                    alt="Logo" class="custom-logo-header" onerror="this.style.display='none'">
             </div>
             <h2 style="color:var(--col-teal); margin-bottom:30px; font-weight:800; font-size:2rem;">PLANT ASTO EXAM</h2>
 
@@ -561,10 +612,19 @@
             <input type="text" id="inp-code" class="inp-login" placeholder="Kode Ujian" autocomplete="off"
                 oninput="this.value = this.value.toUpperCase()">
 
-            <button id="btn-login" class="btn-modal btn-teal" style="width:100%; padding:15px; font-size:1.1rem;"
-                onclick="doLogin()">MULAI UJIAN</button>
-            <p id="txt-load" style="display:none; margin-top:20px; color:#666; font-weight:600;">Memverifikasi data...
-            </p>
+            <div id="login-controls">
+                <button id="btn-login" class="btn-modal btn-teal" style="width:100%; padding:15px; font-size:1.1rem;"
+                    onclick="doLogin()">MULAI UJIAN</button>
+
+                <div id="loading-verify">
+                    <div class="dot-spinner">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                    <p style="color:#666;">Memverifikasi data...</p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -644,8 +704,10 @@
 
             if (!n || !nr || !c) return alertM("Gagal", "Nama, NRP, dan Kode wajib diisi!", 'err');
 
-            document.getElementById('btn-login').disabled = true;
-            document.getElementById('txt-load').style.display = 'block';
+            // START: KODE BARU UNTUK SPINNER
+            document.getElementById('btn-login').style.display = 'none';
+            document.getElementById('loading-verify').style.display = 'flex';
+            // END: KODE BARU UNTUK SPINNER
 
             fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'login', kode: c }) })
                 .then(r => r.json()).then(d => {
@@ -659,8 +721,12 @@
                     } else { alertM("Login Gagal", d.message, 'err'); resetL(); }
                 }).catch(() => { alertM("Error", "Gagal koneksi server.", 'err'); resetL(); });
         }
-        function resetL() { document.getElementById('btn-login').disabled = false; document.getElementById('txt-load').style.display = 'none'; }
-
+        function resetL() {
+            // START: KODE BARU UNTUK SPINNER
+            document.getElementById('btn-login').style.display = 'block';
+            document.getElementById('loading-verify').style.display = 'none';
+            // END: KODE BARU UNTUK SPINNER
+        }
         function init() {
             const g = document.getElementById('nav-grid');
             st.q.forEach((_, i) => {
