@@ -677,7 +677,7 @@
     <script>
         // =========================================
         // WAJIB GANTI URL INI DENGAN DEPLOY TERBARU!
-        const API_URL = 'https://script.google.com/macros/s/AKfycbxf4cOBYVM-MJQzG8VVE_fQETfgl_zHnIpOlCsFIfbMYwccj6CvNXnMDaaLI0yv84CCOg/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxngIjnZekmGsortPIX2PRo2Itkc_BftKBUbCAtLX03-ga9iZTDvTveDECJ2EmMj6tBtg/exec';
         // =========================================
 
         let st = { q: [], ans: [], i: 0, nm: '', nrp: '', cd: '', tm: null, v: 0 };
@@ -696,8 +696,10 @@
             document.getElementById('mok').onclick = () => { closeM(); if (cb) cb(); };
         }
 
+        // ... (Baris 380 - 418 di <script>)
+
         function doLogin() {
-            // AMBIL VALUE NRP JUGA
+            // AMBIL VALUE NAMA, NRP, DAN KODE
             const n = document.getElementById('inp-name').value.trim();
             const nr = document.getElementById('inp-nrp').value.trim();
             const c = document.getElementById('inp-code').value.trim();
@@ -709,7 +711,18 @@
             document.getElementById('loading-verify').style.display = 'flex';
             // END: KODE BARU UNTUK SPINNER
 
-            fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'login', kode: c }) })
+            // PERBAIKAN KRUSIAL V7.1: Kirim Nama dan NRP ke handleLogin()
+            const dataToSend = {
+                action: 'login',
+                nama: n,   // <--- KIRIM NAMA
+                nrp: nr,   // <--- KIRIM NRP
+                kode: c    // <--- KIRIM KODE
+            };
+
+            fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify(dataToSend)
+            })
                 .then(r => r.json()).then(d => {
                     if (d.status === 'success') {
                         st.nm = n; st.nrp = nr; st.cd = c; // SIMPAN NRP KE STATE
@@ -721,6 +734,7 @@
                     } else { alertM("Login Gagal", d.message, 'err'); resetL(); }
                 }).catch(() => { alertM("Error", "Gagal koneksi server.", 'err'); resetL(); });
         }
+        // ... (Lanjutkan dengan fungsi resetL() dan seterusnya)
         function resetL() {
             // START: KODE BARU UNTUK SPINNER
             document.getElementById('btn-login').style.display = 'block';
@@ -797,4 +811,3 @@
 </body>
 
 </html>
-
