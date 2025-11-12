@@ -671,17 +671,17 @@
         /* FONT SIZE STYLES */
         /* --------------------------------- */
         .q-card.font-small .q-text {
-            font-size: 1.4rem;
+            font-size: 1.0rem;
             /* Contoh ukuran kecil */
         }
 
         .q-card.font-medium .q-text {
-            font-size: 1.6rem;
+            font-size: 1.2rem;
             /* Ukuran default */
         }
 
         .q-card.font-large .q-text {
-            font-size: 1.8rem;
+            font-size: 1.4rem;
             /* Contoh ukuran besar */
         }
 
@@ -691,7 +691,7 @@
         }
 
         .q-card.font-large .opt-box {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
         }
     </style>
 </head>
@@ -757,11 +757,7 @@
                     </span>
                     <div>=====================</div>
                     <span id="timer" class="timer-val">00:00:00</span>
-                    <div style="padding: 20px 25px; border-top: 1px solid #eee; text-align: center;">
-                        <button id="dark-mode-toggle" class="btn-modal btn-grey" style="width: 100%; padding: 10px;">
-                            <span id="dark-mode-text">Aktifkan Mode Malam</span> 🌙
-                        </button>
-                    </div>
+
                 </div>
             </div>
             <div class="sidebar-nav-content">
@@ -770,6 +766,11 @@
         </nav>
 
         <main id="main-area">
+            <div style="padding: 20px 25px; border-top: 1px solid #eee; text-align: center;">
+                <button id="dark-mode-toggle" class="btn-modal btn-grey" style="width: 100%; padding: 7px;">
+                    <span id="dark-mode-text">Aktifkan Mode Malam</span> 🌙
+                </button>
+            </div>
             <div class="q-card">
                 <div style="color:#aaa; font-weight:700; letter-spacing:1.5px; margin-bottom:25px;">SOAL <span
                         id="q-idx">1</span> DARI <span id="q-total">10</span></div>
@@ -811,6 +812,9 @@
         // ... di dalam blok <script> ...
 
         // Fungsi untuk menangani Dark Mode
+        // ... di dalam blok <script> ...
+
+        // Fungsi untuk menangani Dark Mode
         function toggleDarkMode() {
             const body = document.body;
             body.classList.toggle('dark-mode');
@@ -841,6 +845,8 @@
                 toggleBtn.addEventListener('click', toggleDarkMode);
             }
         });
+
+        // ... fungsi doLogin(), init(), load(), dll.
 
         // 
         // ... di dalam blok <script> ...
