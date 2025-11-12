@@ -581,6 +581,118 @@
                 transform: scale(1.0);
             }
         }
+
+        /* ... di dalam blok <style> ... */
+
+        /* Variabel Warna Dark Mode */
+        :root {
+            /* ... variabel yang sudah ada ... */
+            --col-bg-dark: #121212;
+            --col-card-dark: #1e1e1e;
+            --col-text-dark: #e0e0e0;
+            --col-text-secondary-dark: #b0b0b0;
+            --col-border-dark: #333333;
+        }
+
+        /* --------------------------------- */
+        /* DARK MODE STYLES */
+        /* --------------------------------- */
+        body.dark-mode {
+            background: var(--col-bg-dark);
+        }
+
+        body.dark-mode #sidebar {
+            background: var(--col-card-dark);
+            box-shadow: 5px 0 25px rgba(0, 0, 0, 0.4);
+        }
+
+        body.dark-mode .sidebar-header-teal {
+            background: var(--col-card-dark);
+            /* Ubah agar tidak terlalu terang */
+        }
+
+        body.dark-mode .timer-val {
+            color: var(--col-text-dark);
+        }
+
+        body.dark-mode .q-card {
+            background: var(--col-card-dark);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4);
+        }
+
+        body.dark-mode .q-text {
+            color: var(--col-text-dark);
+        }
+
+        body.dark-mode .opt-box {
+            background: var(--col-card-dark);
+            border: 2px solid var(--col-border-dark);
+            color: var(--col-text-secondary-dark);
+        }
+
+        body.dark-mode .opt-box:hover {
+            background: var(--col-border-dark);
+        }
+
+        /* Penyesuaian Nav Dot untuk Dark Mode */
+        body.dark-mode .nav-dot {
+            background: #333;
+            color: #888;
+        }
+
+        body.dark-mode .nav-dot.answered {
+            background: var(--col-card-dark);
+            color: var(--col-teal-light);
+            box-shadow: 0 0 0 5px #004d40;
+            /* Teal gelap */
+        }
+
+        body.dark-mode .nav-dot.active {
+            background: var(--col-teal) !important;
+            color: white !important;
+            box-shadow: 0 0 0 5px #004d40;
+        }
+
+        /* Penyesuaian Header Mobile pada Dark Mode */
+        @media (max-width: 768px) {
+            body.dark-mode .sidebar-header-teal {
+                background: var(--col-card-dark);
+                border-bottom: 2px solid var(--col-teal);
+                box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+            }
+
+            body.dark-mode .timer-val {
+                color: var(--col-teal);
+                /* Pertahankan warna teal di mobile */
+            }
+        }
+
+        /* --------------------------------- */
+        /* FONT SIZE STYLES */
+        /* --------------------------------- */
+        .q-card.font-small .q-text {
+            font-size: 1.4rem;
+            /* Contoh ukuran kecil */
+        }
+
+        .q-card.font-medium .q-text {
+            font-size: 1.6rem;
+            /* Ukuran default */
+        }
+
+        .q-card.font-large .q-text {
+            font-size: 1.8rem;
+            /* Contoh ukuran besar */
+        }
+
+        /* Penyesuaian ukuran teks opsi */
+        .q-card.font-small .opt-box {
+            font-size: 1.0rem;
+        }
+
+        .q-card.font-large .opt-box {
+            font-size: 1.3rem;
+        }
     </style>
 </head>
 
@@ -645,6 +757,11 @@
                     </span>
                     <div>=====================</div>
                     <span id="timer" class="timer-val">00:00:00</span>
+                    <div style="padding: 20px 25px; border-top: 1px solid #eee; text-align: center;">
+                        <button id="dark-mode-toggle" class="btn-modal btn-grey" style="width: 100%; padding: 10px;">
+                            <span id="dark-mode-text">Aktifkan Mode Malam</span> 🌙
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="sidebar-nav-content">
@@ -656,6 +773,15 @@
             <div class="q-card">
                 <div style="color:#aaa; font-weight:700; letter-spacing:1.5px; margin-bottom:25px;">SOAL <span
                         id="q-idx">1</span> DARI <span id="q-total">10</span></div>
+                <div>
+                    <span style="font-size:0.9rem; color:#777; margin-right:10px;">Ukuran Teks:</span>
+                    <button class="btn-modal btn-grey font-size-btn" data-size="small"
+                        style="padding: 5px 10px; font-size: 0.8rem;">A-</button>
+                    <button class="btn-modal btn-teal font-size-btn" data-size="medium"
+                        style="padding: 5px 10px; font-size: 0.9rem;">A</button>
+                    <button class="btn-modal btn-grey font-size-btn" data-size="large"
+                        style="padding: 5px 10px; font-size: 1rem;">A+</button>
+                </div>
                 <div id="q-img-wrap"><img id="q-img-el" src=""></div>
                 <div class="q-text" id="q-txt">Loading...</div>
                 <div id="opt-wrap"></div>
@@ -681,6 +807,82 @@
         // =========================================
 
         let st = { q: [], ans: [], i: 0, nm: '', nrp: '', cd: '', tm: null, v: 0 };
+
+        // ... di dalam blok <script> ...
+
+        // Fungsi untuk menangani Dark Mode
+        function toggleDarkMode() {
+            const body = document.body;
+            body.classList.toggle('dark-mode');
+            const isDarkMode = body.classList.contains('dark-mode');
+
+            // Simpan preferensi pengguna ke Local Storage
+            localStorage.setItem('darkMode', isDarkMode ? 'enabled' : 'disabled');
+
+            // Update teks tombol
+            document.getElementById('dark-mode-text').innerText = isDarkMode ? 'Nonaktifkan Mode Malam' : 'Aktifkan Mode Malam';
+        }
+
+        // Terapkan preferensi mode malam saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', () => {
+            // ... (kode lain di sini)
+
+            // Inisialisasi Dark Mode
+            const savedMode = localStorage.getItem('darkMode');
+            const toggleBtn = document.getElementById('dark-mode-toggle');
+
+            if (savedMode === 'enabled') {
+                document.body.classList.add('dark-mode');
+                document.getElementById('dark-mode-text').innerText = 'Nonaktifkan Mode Malam';
+            }
+
+            // Tambahkan event listener ke tombol toggle
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', toggleDarkMode);
+            }
+        });
+
+        // 
+        // ... di dalam blok <script> ...
+
+        function setFontSize(size) {
+            const qCard = document.querySelector('.q-card');
+            // Hapus semua kelas ukuran font yang mungkin ada
+            qCard.classList.remove('font-small', 'font-medium', 'font-large');
+
+            // Tambahkan kelas baru
+            if (size !== 'medium') { // Jika bukan medium (default)
+                qCard.classList.add(`font-${size}`);
+            }
+
+            // Perbarui status tombol aktif
+            document.querySelectorAll('.font-size-btn').forEach(btn => {
+                btn.classList.remove('btn-teal');
+                btn.classList.add('btn-grey');
+                if (btn.getAttribute('data-size') === size) {
+                    btn.classList.remove('btn-grey');
+                    btn.classList.add('btn-teal');
+                }
+            });
+
+            // Simpan preferensi
+            localStorage.setItem('fontSize', size);
+        }
+
+        // ... di dalam document.addEventListener('DOMContentLoaded', () => { ... })
+
+        // Inisialisasi Font Size
+        const savedFontSize = localStorage.getItem('fontSize') || 'medium';
+        setFontSize(savedFontSize); // Panggil fungsi inisialisasi
+
+        // Tambahkan event listener untuk tombol font
+        document.querySelectorAll('.font-size-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                setFontSize(this.getAttribute('data-size'));
+            });
+        });
+
+        // ...
 
         function modal(ti, msg, type, btns) {
             const ico = { ok: '<span style="color:var(--col-success)">&#10004;</span>', err: '<span style="color:var(--col-danger)">&#10006;</span>', warn: '<span style="color:#F39C12">&#9888;</span>' };
