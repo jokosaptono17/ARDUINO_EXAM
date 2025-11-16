@@ -955,7 +955,7 @@
                 const b = document.createElement('button'); b.className = 'nav-dot'; b.id = 'dot-' + i; b.innerText = i + 1;
                 b.onclick = () => load(i); g.appendChild(b);
             });
-            load(0); timer(5400); secure();
+            load(0); timer(2700); secure();
             window.onbeforeunload = () => "Ujian sedang berlangsung!";
         }
         function load(i) {
@@ -1019,3 +1019,4 @@
 </body>
 
 </html>
+
