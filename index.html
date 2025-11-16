@@ -804,15 +804,44 @@
     <script>
         // =========================================
         // WAJIB GANTI URL INI DENGAN DEPLOY TERBARU!
-        const API_URL = 'https://script.google.com/macros/s/AKfycbxngIjnZekmGsortPIX2PRo2Itkc_BftKBUbCAtLX03-ga9iZTDvTveDECJ2EmMj6tBtg/exec';
+        const API_URL = 'https://script.google.com/macros/s/AKfycbyw5AekG9u3HBW4Wanbrz8m9RN_p4lYamn5N2JCxw_RecAJZwml_xWX_e83N2AtRJhVrg/exec';
         // =========================================
 
         let st = { q: [], ans: [], i: 0, nm: '', nrp: '', cd: '', tm: null, v: 0 };
 
         // ... di dalam blok <script> ...
 
+        function disableKeys() {
+            document.onkeydown = function (e) {
+                // Mencegah PrtSc (Print Screen)
+                if (e.key === 'PrintScreen' || e.key === 'p' && e.ctrlKey) {
+                    alert('Aksi screenshot tidak diizinkan selama ujian.');
+                    return false;
+                }
+
+                // Mencegah F12 (Developer Tools)
+                if (e.key === 'F12') {
+                    alert('Akses Developer Tools diblokir.');
+                    return false;
+                }
+
+                // Mencegah Ctrl+U (View Source)
+                if (e.ctrlKey && e.key === 'u') {
+                    alert('Melihat source code diblokir.');
+                    return false;
+                }
+
+                // Mencegah Ctrl+S (Save Page)
+                if (e.ctrlKey && e.key === 's') {
+                    alert('Menyimpan halaman diblokir.');
+                    return false;
+                }
+            };
+        }
+
         // Fungsi untuk menangani Dark Mode
         // ... di dalam blok <script> ...
+
 
         // Fungsi untuk menangani Dark Mode
         function toggleDarkMode() {
@@ -922,9 +951,9 @@
             // PERBAIKAN KRUSIAL V7.1: Kirim Nama dan NRP ke handleLogin()
             const dataToSend = {
                 action: 'login',
-                nama: n,   // <--- KIRIM NAMA
-                nrp: nr,   // <--- KIRIM NRP
-                kode: c    // <--- KIRIM KODE
+                nama: n,    // <--- KIRIM NAMA
+                nrp: nr,    // <--- KIRIM NRP
+                kode: c     // <--- KIRIM KODE
             };
 
             fetch(API_URL, {
@@ -934,7 +963,14 @@
                 .then(r => r.json()).then(d => {
                     if (d.status === 'success') {
                         st.nm = n; st.nrp = nr; st.cd = c; // SIMPAN NRP KE STATE
-                        st.q = d.questions; st.ans = new Array(d.questions.length).fill(null);
+                        st.q = d.questions;
+                        st.ans = new Array(d.questions.length).fill(null);
+
+                        // --- START PERUBAHAN V7.5 ---
+                        // TANGKAP DURASI DARI SERVER (handleLogin)
+                        st.duration = d.duration; // <--- BARIS PENTING: Durasi disimpan ke st.duration
+                        // --- END PERUBAHAN V7.5 ---
+
                         document.getElementById('login-layer').style.display = 'none';
                         document.getElementById('app-layer').style.display = 'flex';
                         document.getElementById('q-total').innerText = st.q.length;
@@ -955,7 +991,21 @@
                 const b = document.createElement('button'); b.className = 'nav-dot'; b.id = 'dot-' + i; b.innerText = i + 1;
                 b.onclick = () => load(i); g.appendChild(b);
             });
-            load(0); timer(2700); secure();
+
+            load(0);
+
+            // --- START PERUBAHAN V7.5 ---
+            // Mengganti nilai hardcode 5400 dengan durasi dinamis dari server
+            timer(st.duration);
+            // --- END PERUBAHAN V7.5 ---
+
+            // index.html, di bagian atas blok <script>
+            // ...
+
+            disableKeys(); // <--- Panggil di sini agar aktif sejak awal
+            // ...
+
+            secure();
             window.onbeforeunload = () => "Ujian sedang berlangsung!";
         }
         function load(i) {
@@ -1019,4 +1069,3 @@
 </body>
 
 </html>
-
